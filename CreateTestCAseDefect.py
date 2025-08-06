@@ -65,7 +65,8 @@ def create_test_case(project_key, name, steps):
     return response.json()
 
 # Main logic
-jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD_NAME}" = true'issues = search_issues_jql(jql, max_results=50)
+jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD_NAME}" = true'
+issues = search_issues_jql(jql, max_results=50)
 
 if not issues:
     print("ℹ️ No matching Bugs found with Test Case checkbox checked.")
