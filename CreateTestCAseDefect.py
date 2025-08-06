@@ -16,7 +16,7 @@ JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
 # Update with your actual Jira custom field IDs
 REPRO_STEPS_FIELD = "customfield_13101"      # <-- Replace with actual field ID
 CHECKBOX_FIELD = "customfield_14242"         # <-- Replace with actual checkbox field ID
-CHECKBOX_FIELD_NAME = "Create Test Case "  # ✅ Use the visible field label from Jira UI
+CHECKBOX_FIELD_NAME = "Create Test Case"  # ✅ Use the visible field label from Jira UI
 
 def search_issues_jql(jql, max_results=25):
     url = f"{JIRA_BASE_URL}/rest/api/3/search"
