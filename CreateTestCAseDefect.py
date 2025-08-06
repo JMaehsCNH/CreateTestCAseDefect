@@ -6,8 +6,8 @@ import os
 JIRA_BASE_URL = "https://cnhpd.atlassian.net"
 ZEPHYR_BASE_URL = "https://api.zephyrscale.smartbear.com/v2"
 JIRA_EMAIL = "john.maehs@cnh.com"
-JIRA_API_TOKEN = os.getenv("JIRATOKEN")  # Set in your environment
-ZEPHYR_TOKEN = os.getenv("ZEPHYRTOKEN")  # Set in your environment
+JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")  # Set in your environment
+ZEPHYR_TOKEN = os.getenv("ZEPHYR_TOKEN")  # Set in your environment
 ZEPHYR_PROJECT_KEY = "PREC"
 
 
