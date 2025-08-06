@@ -74,7 +74,7 @@ else:
     for issue in issues:
         key = issue["key"]
         summary = issue["fields"]["summary"]
-        checkbox = issue["fields"].get(CHECKBOX_FIELD_ID, False)
+        checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
         description = issue["fields"].get(REPRO_STEPS_FIELD, "")
 
         if checkbox and description:
