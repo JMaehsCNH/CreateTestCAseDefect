@@ -16,6 +16,7 @@ JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
 # Update with your actual Jira custom field IDs
 REPRO_STEPS_FIELD = "customfield_13101"      # <-- Replace with actual field ID
 CHECKBOX_FIELD = "customfield_14242"         # <-- Replace with actual checkbox field ID
+CHECKBOX_FIELD_NAME = "Create Zephyr Test Case"  # ✅ Use the visible field label from Jira UI
 
 def search_issues_jql(jql, max_results=25):
     url = f"{JIRA_BASE_URL}/rest/api/3/search"
@@ -64,8 +65,7 @@ def create_test_case(project_key, name, steps):
     return response.json()
 
 # Main logic
-jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD}" = true'
-issues = search_issues_jql(jql, max_results=50)
+jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD_NAME}" = true'issues = search_issues_jql(jql, max_results=50)
 
 if not issues:
     print("ℹ️ No matching Bugs found with Test Case checkbox checked.")
@@ -73,7 +73,7 @@ else:
     for issue in issues:
         key = issue["key"]
         summary = issue["fields"]["summary"]
-        checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
+        checkbox = issue["fields"].get(CHECKBOX_FIELD_ID, False)
         description = issue["fields"].get(REPRO_STEPS_FIELD, "")
 
         if checkbox and description:
