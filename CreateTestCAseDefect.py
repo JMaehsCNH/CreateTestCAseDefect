@@ -13,15 +13,34 @@ ZEPHYR_PROJECT_KEY = "PREC"
 
 # Authentication
 JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
+
 print("🔐 Testing Jira authentication...")
-auth_check = requests.get(f"{JIRA_BASE_URL}/rest/api/3/myself", auth=JIRA_AUTH)
+print(f"📥 Env var JIRA_EMAIL: {JIRA_EMAIL}")
+print(f"📥 Env var JIRA_API_TOKEN set: {'Yes' if JIRA_API_TOKEN else 'No'}")
+print(f"🌐 Jira URL: {JIRA_BASE_URL}/rest/api/3/myself")
+
+# Optionally show Authorization header for debugging
+import base64
+if JIRA_EMAIL and JIRA_API_TOKEN:
+    token = base64.b64encode(f"{JIRA_EMAIL}:{JIRA_API_TOKEN}".encode()).decode()
+    print(f"🧪 Base64 Authorization header (debug): Basic {token[:6]}...")
+
+# Use basic auth in headers to match Jira expectations
+headers = {
+    "Authorization": f"Basic {token}",
+    "Content-Type": "application/json"
+}
+auth_check = requests.get(f"{JIRA_BASE_URL}/rest/api/3/myself", headers=headers)
+
 print(f"Auth status: {auth_check.status_code}")
 if auth_check.status_code != 200:
     print("❌ Jira authentication failed.")
+    print("Response body:")
     print(auth_check.text)
     exit(1)
 else:
     print("✅ Jira authentication successful.")
+
 
 # Update with your actual Jira custom field IDs
 REPRO_STEPS_FIELD = "customfield_13101"      # <-- Replace with actual field ID
