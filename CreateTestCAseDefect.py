@@ -41,6 +41,15 @@ if auth_check.status_code != 200:
 else:
     print("✅ Jira authentication successful.")
 
+url = f"{JIRA_BASE_URL}/rest/api/3/search"
+payload = {
+    "jql": "project = PREC AND issuetype = Bug",
+    "maxResults": 1
+}
+response = requests.post(url, auth=JIRA_AUTH, json=payload, headers={"Content-Type": "application/json"})
+
+print(response.status_code)
+print(response.json())
 
 # Update with your actual Jira custom field IDs
 REPRO_STEPS_FIELD = "customfield_13101"      # <-- Replace with actual field ID
