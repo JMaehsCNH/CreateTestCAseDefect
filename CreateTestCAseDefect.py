@@ -77,21 +77,28 @@ def search_issues_jql(jql, max_results=25):
     return response.json().get("issues", [])
 
 
-def extract_repro_steps(description):
-    lines = description.splitlines()
-    steps = []
-    step = ""
-    for line in lines:
-        match = re.match(r"^\s*\d+\.\s*(.*)", line)
-        if match:
-            if step:
-                steps.append({"action": step.strip()})
-            step = match.group(1)
-        else:
-            step += "\n" + line
-    if step:
-        steps.append({"action": step.strip()})
-    return steps
+def extract_repro_steps(adf_dict):
+    if not isinstance(adf_dict, dict):
+        return []
+
+    try:
+        content = adf_dict.get("content", [])
+        steps = []
+
+        for list_block in content:
+            if list_block["type"] == "orderedList":
+                for item in list_block["content"]:
+                    step_text = ""
+                    for para in item["content"]:
+                        for part in para["content"]:
+                            step_text += part.get("text", "")
+                    steps.append({"action": step_text.strip()})
+        return steps
+
+    except Exception as e:
+        print(f"⚠️ Error parsing ADF repro steps: {e}")
+        return []
+
 
 def create_test_case(project_key, name, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases"
