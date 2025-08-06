@@ -10,6 +10,7 @@ JIRA_API_TOKEN = os.getenv("JIRATOKEN")  # Set in your environment
 ZEPHYR_TOKEN = os.getenv("ZEPHYRTOKEN")  # Set in your environment
 ZEPHYR_PROJECT_KEY = "PREC"
 
+
 # Authentication
 JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
 print("🔐 Testing Jira authentication...")
@@ -83,7 +84,7 @@ def create_test_case(project_key, name, steps):
     return response.json()
 
 # Main logic
-jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD_NAME}" = "true"'
+jql = f'project = PREC AND issuetype = Bug AND {CHECKBOX_FIELD} = true'
 issues = search_issues_jql(jql, max_results=50)
 
 if not issues:
