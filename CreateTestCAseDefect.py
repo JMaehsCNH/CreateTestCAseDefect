@@ -17,11 +17,17 @@ JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
 REPRO_STEPS_FIELD = "issue.customfield_13101"      # <-- Replace with actual field ID
 CHECKBOX_FIELD = "issue.customfield_14242"         # <-- Replace with actual checkbox field ID
 
-def get_issue(issue_key):
-    url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}"
-    response = requests.get(url, auth=JIRA_AUTH)
+def search_issues_jql(jql, max_results=25):
+    url = f"{JIRA_BASE_URL}/rest/api/3/search"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "jql": jql,
+        "maxResults": max_results,
+        "fields": [REPRO_STEPS_FIELD, CHECKBOX_FIELD, "summary", "project", "issuetype"]
+    }
+    response = requests.post(url, auth=JIRA_AUTH, json=payload, headers=headers)
     response.raise_for_status()
-    return response.json()
+    return response.json().get("issues", [])
 
 def extract_repro_steps(description):
     lines = description.splitlines()
@@ -50,27 +56,30 @@ def create_test_case(project_key, name, steps):
         "name": name,
         "testScript": {
             "type": "PLAIN_TEXT",
-            "steps": [
-                {"action": step["action"], "expectedResult": ""} for step in steps
-            ]
+            "steps": [{"action": step["action"], "expectedResult": ""} for step in steps]
         }
     }
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
 
-# -------- MAIN EXECUTION --------
-issue_key = "PREC-123"  # Replace or pass in dynamically (from webhook or arg)
-issue = get_issue(issue_key)
+# Main logic
+jql = f'project = PREC AND issuetype = Bug AND "{CHECKBOX_FIELD}" = true'
+issues = search_issues_jql(jql, max_results=50)
 
-project = issue["fields"]["project"]["key"]
-issuetype = issue["fields"]["issuetype"]["name"]
-checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
-description = issue["fields"].get(REPRO_STEPS_FIELD, "")
-
-if project == "PREC" and issuetype == "Bug" and checkbox and description:
-    steps = extract_repro_steps(description)
-    test_case = create_test_case(ZEPHYR_PROJECT_KEY, f"Auto TC from {issue_key}", steps)
-    print(f"✅ Created Zephyr test case: {test_case['key']}")
+if not issues:
+    print("ℹ️ No matching Bugs found with Test Case checkbox checked.")
 else:
-    print("⚠️ Conditions not met. Not a PREC Bug with checkbox checked and repro steps filled.")
+    for issue in issues:
+        key = issue["key"]
+        summary = issue["fields"]["summary"]
+        checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
+        description = issue["fields"].get(REPRO_STEPS_FIELD, "")
+
+        if checkbox and description:
+            print(f"🔄 Processing issue: {key} - {summary}")
+            steps = extract_repro_steps(description)
+            test_case = create_test_case(ZEPHYR_PROJECT_KEY, f"Auto TC from {key}", steps)
+            print(f"✅ Created Zephyr Test Case: {test_case['key']}")
+        else:
+            print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
