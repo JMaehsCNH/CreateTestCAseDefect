@@ -1,34 +1,30 @@
-trigger:
-  branches:
-    include:
-      - main
+name: Create Test Case From Defect
 
-pool:
-  vmImage: 'ubuntu-latest'
+on:
+  push:
+    branches:
+      - main  # Change if needed
+  workflow_dispatch:  # Allows manual trigger
 
-variables:
-  projectKey: 'PREC'
+jobs:
+  create-zephyr-test-case:
+    runs-on: ubuntu-latest
 
-stages:
-  - stage: RunCreateTestCase
-    jobs:
-      - job: RunScript
-        steps:
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '3.x'
-              addToPath: true
+    env:
+      jiraToken: ${{ secrets.JIRA_TOKEN }}
+      zephyrToken: ${{ secrets.ZEPHYR_TOKEN }}
 
-          - script: python -m pip install --upgrade pip
-            displayName: 'Upgrade pip'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-          # (Optional) Install requirements.txt if needed
-          # - script: pip install -r requirements.txt
-          #   displayName: 'Install dependencies'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
 
-          - script: |
-              python CreateTestCaseDefect.py
-            env:
-              jiraToken: $(jiraToken)
-              zephyrToken: $(zephyrToken)
-            displayName: 'Run CreateTestCaseDefect'
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run CreateTestCAseDefect.py
+        run: python CreateTestCAseDefect.py
