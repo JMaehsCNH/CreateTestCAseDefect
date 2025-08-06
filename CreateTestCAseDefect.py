@@ -112,7 +112,7 @@ def create_test_case(project_key, name, steps):
     return response.json()
 
 # Main logic
-jql = f'project = PREC AND issuetype = Bug AND {CHECKBOX_FIELD} = "true"'
+jql = 'project = PREC AND issuetype = Bug AND customfield_14242 = 13384'
 issues = search_issues_jql(jql, max_results=50)
 
 if not issues:
