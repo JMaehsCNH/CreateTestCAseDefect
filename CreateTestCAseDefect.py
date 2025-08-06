@@ -27,8 +27,17 @@ def search_issues_jql(jql, max_results=25):
         "fields": [REPRO_STEPS_FIELD, CHECKBOX_FIELD, "summary", "project", "issuetype"]
     }
     response = requests.post(url, auth=JIRA_AUTH, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        print("❌ Jira Search Error:")
+        print(f"Status Code: {response.status_code}")
+        print(f"URL: {url}")
+        print(f"JQL: {jql}")
+        print(f"Response: {response.text}")
+        
     response.raise_for_status()
     return response.json().get("issues", [])
+
 
 def extract_repro_steps(description):
     lines = description.splitlines()
