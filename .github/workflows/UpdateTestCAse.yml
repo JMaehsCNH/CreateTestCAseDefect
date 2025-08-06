@@ -31,4 +31,4 @@ stages:
             env:
               jiraToken: $(jiraToken)
               zephyrToken: $(zephyrToken)
-            displayName: 'Run CreateTestCaseDefect Script'
+            displayName: 'Run CreateTestCaseDefect'
