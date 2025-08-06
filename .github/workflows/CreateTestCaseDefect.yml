@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      jiraToken: ${{ secrets.JIRA_TOKEN }}
-      zephyrToken: ${{ secrets.ZEPHYR_TOKEN }}
+      JIRATOKEN: ${{ secrets.JIRATOKEN }}
+      ZEPHYRTOKEN: ${{ secrets.ZEPHYRTOKEN }}
 
     steps:
       - name: Checkout code
