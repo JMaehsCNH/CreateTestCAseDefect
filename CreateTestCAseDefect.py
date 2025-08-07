@@ -176,6 +176,30 @@ def add_test_steps(test_case_key, steps):
             print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
+        
+def fetch_test_steps(test_case_key):
+    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
+    headers = {
+        "Authorization": f"Bearer {ZEPHYR_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    print(f"🔍 Fetching test steps from {url} ...")
+    response = requests.get(url, headers=headers)
+
+    print(f"📥 Fetch Status: {response.status_code}")
+    try:
+        response.raise_for_status()
+        steps = response.json().get("values", [])
+        print("📋 Stored Steps in Zephyr:")
+        for i, step in enumerate(steps, 1):
+            print(f"  Step {i}:")
+            print(f"    Step: {step.get('step')}")
+            print(f"    Test Data: {step.get('testData')}")
+            print(f"    Expected Result: {step.get('expectedResult')}")
+    except Exception as e:
+        print("❌ Failed to fetch stored steps.")
+        print(response.text)
 
 
 # Main logic
