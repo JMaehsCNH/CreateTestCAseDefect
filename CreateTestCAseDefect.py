@@ -126,7 +126,7 @@ def create_test_case(project_key, name):
     payload = {
         "projectKey": project_key,
         "name": name,
-        "scriptType": "STEP_BY_STEP",
+        "scriptType": "GHERKIN",
         "automated": False
     }
 
@@ -169,56 +169,37 @@ def to_adf(text):
         ]
     }
 
-def add_test_steps(test_case_key, steps):
-    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
+def add_gherkin_script(test_case_key, steps):
+    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/testscript"
     headers = {
         "Authorization": f"Bearer {ZEPHYR_TOKEN}",
         "Content-Type": "application/json"
     }
 
+    # Convert steps to Gherkin format (assumes each step is a line)
+    gherkin_script = "Feature: Auto-generated from Jira Bug\n  Scenario: Auto test\n"
+    for step in steps:
+        line = step.get("action", "").strip()
+        if line.lower().startswith("given") or line.lower().startswith("when") or line.lower().startswith("then") or line.lower().startswith("and"):
+            gherkin_script += f"    {line}\n"
+        else:
+            gherkin_script += f"    And {line}\n"
+
     payload = {
-        "mode": "APPEND",
-        "items": []
+        "text": gherkin_script
     }
 
-    for idx, step in enumerate(steps, 1):
-        step_text = step.get("action", f"Step {idx}").strip()
-        expected = step.get("expectedResult", "No Expected Result").strip()
-        data = step.get("testData", "").strip()
-
-        print(f"🧪 Step {idx}:")
-        print(f"    step = '{step_text}'")
-        print(f"    expectedResult = '{expected}'")
-        print(f"    testData = '{data}'")
-
-        payload["items"].append({
-            "inline": {
-                "step": step_text,
-                "expectedResult": expected,
-                "testData": data
-            }
-        })
-
-
-
-
-    print(f"📤 URL: {url}")
-    print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
-    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
-
+    print(f"📤 Adding Gherkin script to {test_case_key}...")
+    print(f"📄 Gherkin script:\n{gherkin_script}")
     response = requests.post(url, headers=headers, json=payload)
 
-    print(f"📥 Raw Response Status: {response.status_code}")
-    print(f"📥 Raw Response Text:\n{response.text}")
+    print(f"📥 Response Status: {response.status_code}")
+    print(f"📥 Response Text: {response.text}")
 
-    if response.status_code != 201:
-        try:
-            print("❌ Zephyr API Error:")
-            print(json.dumps(response.json(), indent=2))
-        except:
-            print("❌ Non-JSON error response.")
+    if response.status_code != 200:
+        print("❌ Failed to add Gherkin script.")
     else:
-        print("✅ Steps added successfully.")
+        print("✅ Gherkin script added successfully.")
 
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
@@ -274,8 +255,8 @@ else:
             else:
                 test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
                 print(f"✅ Created Zephyr Test Case: {test_case['key']}")
-                add_test_steps(test_case['key'], steps)
-                fetch_test_steps(test_case['key'])  # ✅ Verify the result in Zephyr
+                add_gherkin_script(test_case['key'], steps)
+
 
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
