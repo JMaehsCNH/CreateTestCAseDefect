@@ -186,21 +186,37 @@ def to_adf(text):
         ]
     }
 
-def post_zephyr_comment(issue_key, zephyr_key):  # ✅ Moved to top-level
+def post_zephyr_comment(issue_key, zephyr_key):
     url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
     headers = {
         "Authorization": f"Basic {token}",
         "Content-Type": "application/json"
     }
     body = {
-        "body": f"🧪 Linked Zephyr Test Case: **{zephyr_key}**"
+        "body": {
+            "type": "doc",
+            "version": 1,
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": f"🧪 Linked Zephyr Test Case: {zephyr_key}"
+                        }
+                    ]
+                }
+            ]
+        }
     }
+
     response = requests.post(url, headers=headers, json=body)
     if response.status_code == 201:
         print(f"✅ Comment added to {issue_key}")
     else:
         print(f"❌ Failed to comment on {issue_key}")
         print(response.text)
+
 
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
