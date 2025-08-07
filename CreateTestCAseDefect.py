@@ -137,6 +137,7 @@ def create_test_case(project_key, name, steps):
         "projectKey": project_key,
         "name": name,
         "scriptType": "MANUAL",  # Must be set explicitly
+        "automated": False,  # ✅ Add this line to force manual mode
         "testScript": {
             "type": "STEP_BY_STEP",
             "steps": normalized_steps
