@@ -140,8 +140,8 @@ def create_test_case(project_key, name, steps):
         "automated": False,  # ✅ Add this line to force manual mode
         "testScript": {
             "type": "STEP_BY_STEP",
-            "version": 1,  // 👈 force version init
-            "automated": false, // 👈 repeat here
+            "version": 1,
+            "automated": false,
             "steps": normalized_steps
         }
     }
