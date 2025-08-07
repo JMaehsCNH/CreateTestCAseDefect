@@ -176,7 +176,7 @@ def add_test_steps(test_case_key, steps):
         print(f"    testData = '{data}'")
 
         payload["items"].append({
-            "call to test": {
+            "call_to_test": {
                 "step": step_text,
                 "expectedResult": expected,
                 "testData": data
