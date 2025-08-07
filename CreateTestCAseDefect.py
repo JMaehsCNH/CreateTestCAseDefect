@@ -147,10 +147,11 @@ def add_test_steps(test_case_key, steps):
     for idx, step in enumerate(steps, 1):
         url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
         payload = {
+            "mode": "APPEND",  # ✅ This line fixes the error
             "step": step.get("action", f"Step {idx}").strip(),
             "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
             "testData": step.get("testData", "").strip(),
-            "type": "INLINE"  # ✅ Required
+            "type": "INLINE"
         }
 
         print(f"➕ Adding step {idx} to {test_case_key}...")
@@ -162,6 +163,7 @@ def add_test_steps(test_case_key, steps):
             print(response.text)
         else:
             print(f"✅ Step {idx} added.")
+
 
 
 # Main logic
