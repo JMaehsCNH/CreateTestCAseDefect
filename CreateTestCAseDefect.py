@@ -116,42 +116,51 @@ def extract_repro_steps(adf):
 print("📦 Payload being sent to Zephyr:")
 print(json.dumps(payload, indent=2))
 
-def create_test_case(project_key, name, steps):
+def create_test_case(project_key, name):
     url = f"{ZEPHYR_BASE_URL}/testcases"
     headers = {
         "Authorization": f"Bearer {ZEPHYR_TOKEN}",
         "Content-Type": "application/json"
     }
 
-    # Ensure each step has required fields
-    normalized_steps = []
-    for step in steps:
-        normalized_steps.append({
-            "action": step.get("action", "").strip() or "No Action Provided",
-            "expectedResult": step.get("expectedResult", "").strip() or "No Expected Result",
-            "testData": step.get("testData", "").strip() or ""
-        })
-
-    # ✅ Define payload *after* collecting all steps
     payload = {
         "projectKey": project_key,
         "name": name,
-        "scriptType": "MANUAL",  # Must be set explicitly
-        "automated": False,  # ✅ Add this line to force manual mode
-        "testScript": {
-            "type": "STEP_BY_STEP",
-            "version": 1,
-            "automated": False,
-            "steps": normalized_steps
-        }
+        "scriptType": "MANUAL",
+        "automated": False
     }
 
+    print("📤 Creating test case in Zephyr...")
     print("📤 Final Zephyr Payload:")
     print(json.dumps(payload, indent=2))  # 👈 For debug purposes
 
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
+    
+def add_test_steps(test_case_key, steps):
+    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
+    headers = {
+        "Authorization": f"Bearer {ZEPHYR_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    for idx, step in enumerate(steps, 1):
+        payload = {
+            "step": step.get("action", f"Step {idx}").strip(),
+            "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
+            "testData": step.get("testData", "").strip()
+        }
+
+        print(f"➕ Adding step {idx} to {test_case_key}...")
+        print(json.dumps(payload, indent=2))
+
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code != 201:
+            print(f"❌ Failed to add step {idx}: {response.status_code}")
+            print(response.text)
+        else:
+            print(f"✅ Step {idx} added.")
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
@@ -180,8 +189,8 @@ else:
             if not steps:
                 print("⚠️ No steps extracted! Repro format may be unsupported.")
             else:
-                test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary, steps)
+                test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
                 print(f"✅ Created Zephyr Test Case: {test_case['key']}")
+                add_test_steps(test_case['key'], steps)
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
-
