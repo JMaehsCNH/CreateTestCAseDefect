@@ -177,9 +177,9 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "step": rich_text_paragraph(step_text),
-                "expectedResult": rich_text_paragraph(expected),
-                "testData": rich_text_paragraph(data)
+                "step": step_text,
+                "expectedResult": expected,
+                "testData": data
             }
         })
 
@@ -200,7 +200,6 @@ def add_test_steps(test_case_key, steps):
             print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
-
 
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
