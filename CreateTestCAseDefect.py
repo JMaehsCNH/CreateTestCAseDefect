@@ -162,45 +162,9 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "step": {
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": step_text.strip()
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "expectedResult": {
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": expected.strip()
-                                }
-                            ]
-                        }
-                    ]
-                },
-                "testData": {
-                    "content": [
-                        {
-                            "type": "paragraph",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "text": data.strip()
-                                }
-                            ]
-                        }
-                    ]
-                }
+                "step": step_text.strip(),
+                "expectedResult": expected.strip(),
+                "testData": data.strip()
             }
         })
 
@@ -222,6 +186,7 @@ def add_test_steps(test_case_key, steps):
             print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
+lly.")
 
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
