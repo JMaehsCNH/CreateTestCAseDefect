@@ -118,17 +118,27 @@ def create_test_case(project_key, name, steps):
         "Authorization": f"Bearer {ZEPHYR_TOKEN}",
         "Content-Type": "application/json"
     }
+
     payload = {
         "projectKey": project_key,
         "name": name,
         "testScript": {
-            "type": "PLAIN_TEXT",
-            "steps": [{"action": step["action"], "expectedResult": ""} for step in steps]
+            "type": "STEP_BY_STEP",  # <-- Must be this to populate the manual step editor
+            "steps": [
+                {
+                    "action": step["action"],
+                    "expectedResult": step.get("expectedResult", ""),
+                    "testData": step.get("testData", "")
+                }
+                for step in steps
+            ]
         }
     }
+
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
+
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
