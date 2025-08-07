@@ -232,5 +232,7 @@ else:
                 test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
                 print(f"✅ Created Zephyr Test Case: {test_case['key']}")
                 add_test_steps(test_case['key'], steps)
+                fetch_test_steps(test_case['key'])  # ✅ Verify the result in Zephyr
+
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
