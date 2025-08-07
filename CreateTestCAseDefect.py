@@ -77,28 +77,40 @@ def search_issues_jql(jql, max_results=25):
     return response.json().get("issues", [])
 
 
-def extract_repro_steps(adf_dict):
-    if not isinstance(adf_dict, dict):
-        return []
-
-    try:
-        content = adf_dict.get("content", [])
+def extract_repro_steps(adf):
+    # Handle plain string (fallback)
+    if isinstance(adf, str):
+        lines = adf.splitlines()
         steps = []
-
-        for list_block in content:
-            if list_block["type"] == "orderedList":
-                for item in list_block["content"]:
-                    step_text = ""
-                    for para in item["content"]:
-                        for part in para["content"]:
-                            step_text += part.get("text", "")
-                    steps.append({"action": step_text.strip()})
+        step = ""
+        for line in lines:
+            match = re.match(r"^\s*\d+\.\s*(.*)", line)
+            if match:
+                if step:
+                    steps.append({"action": step.strip()})
+                step = match.group(1)
+            else:
+                step += "\n" + line
+        if step:
+            steps.append({"action": step.strip()})
         return steps
 
+    # Handle ADF format
+    steps = []
+    try:
+        for block in adf.get("content", []):
+            if block["type"] == "orderedList":
+                for item in block["content"]:
+                    step_text = ""
+                    for paragraph in item.get("content", []):
+                        for part in paragraph.get("content", []):
+                            if part["type"] == "text":
+                                step_text += part.get("text", "")
+                    if step_text.strip():
+                        steps.append({"action": step_text.strip()})
     except Exception as e:
-        print(f"⚠️ Error parsing ADF repro steps: {e}")
-        return []
-
+        print(f"⚠️ Error parsing ADF: {e}")
+    return steps
 
 def create_test_case(project_key, name, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases"
@@ -134,7 +146,7 @@ else:
         if checkbox and description:
             print(f"🔄 Processing issue: {key} - {summary}")
             steps = extract_repro_steps(description)
-            test_case = create_test_case(ZEPHYR_PROJECT_KEY, f"Auto TC from {key}", steps)
+            test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary, steps)
             print(f"✅ Created Zephyr Test Case: {test_case['key']}")
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
