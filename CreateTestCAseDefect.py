@@ -145,21 +145,20 @@ def add_test_steps(test_case_key, steps):
         "Content-Type": "application/json"
     }
 
-    items = []
-    for idx, step in enumerate(steps, 1):
-        items.append({
-            "step": step.get("action", f"Step {idx}").strip(),
-            "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-            "testData": step.get("testData", "").strip(),
-            "type": "INLINE"
-        })
-
     payload = {
         "mode": "APPEND",
-        "items": items
+        "items": [
+            {
+                "inline": {
+                    "step": step.get("action", f"Step {idx}").strip(),
+                    "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
+                    "testData": step.get("testData", "").strip()
+                }
+            } for idx, step in enumerate(steps, 1)
+        ]
     }
 
-    print(f"📤 Sending {len(items)} steps to {test_case_key}...")
+    print(f"📤 Sending {len(steps)} steps to {test_case_key}...")
     print(json.dumps(payload, indent=2))
 
     response = requests.post(url, headers=headers, json=payload)
@@ -168,6 +167,7 @@ def add_test_steps(test_case_key, steps):
         print(response.text)
     else:
         print("✅ Steps added successfully.")
+
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
