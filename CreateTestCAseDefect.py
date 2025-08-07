@@ -141,7 +141,7 @@ def create_test_case(project_key, name, steps):
         "testScript": {
             "type": "STEP_BY_STEP",
             "version": 1,
-            "automated": false,
+            "automated": False,
             "steps": normalized_steps
         }
     }
