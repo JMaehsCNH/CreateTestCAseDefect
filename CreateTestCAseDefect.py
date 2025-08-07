@@ -149,11 +149,9 @@ def add_test_steps(test_case_key, steps):
         "mode": "APPEND",
         "items": [
             {
-                "inline": {
-                    "step": f"<p>{step.get('action', f'Step {idx}').strip()}</p>",
-                    "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-                    "testData": step.get("testData", "").strip()
-                }
+                "step": step.get("action", f"Step {idx}").strip(),
+                "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
+                "testData": step.get("testData", "").strip()
             } for idx, step in enumerate(steps, 1)
         ]
     }
@@ -167,8 +165,6 @@ def add_test_steps(test_case_key, steps):
         print(response.text)
     else:
         print("✅ Steps added successfully.")
-
-
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
