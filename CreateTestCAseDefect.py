@@ -146,32 +146,65 @@ def add_test_steps(test_case_key, steps):
     }
 
     payload = {
-    "mode": "APPEND",
-    "items": []
-}
+        "mode": "APPEND",
+        "items": []
+    }
 
-for idx, step in enumerate(steps, 1):
-    step_text = step.get("action", f"Step {idx}")
-    expected = step.get("expectedResult", "No Expected Result")
-    data = step.get("testData", "")
+    for idx, step in enumerate(steps, 1):
+        step_text = step.get("action", f"Step {idx}")
+        expected = step.get("expectedResult", "No Expected Result")
+        data = step.get("testData", "")
 
-    print(f"🧪 Step {idx}:")
-    print(f"    step = '{step_text}'")
-    print(f"    expectedResult = '{expected}'")
-    print(f"    testData = '{data}'")
+        print(f"🧪 Step {idx}:")
+        print(f"    step = '{step_text}'")
+        print(f"    expectedResult = '{expected}'")
+        print(f"    testData = '{data}'")
 
-    payload["items"].append({
-        "inline": {
-            "step": step_text.strip(),
-            "expectedResult": expected.strip(),
-            "testData": data.strip()
-        }
-    })
+        payload["items"].append({
+            "inline": {
+                "step": {
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": step_text.strip()
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "expectedResult": {
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": expected.strip()
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "testData": {
+                    "content": [
+                        {
+                            "type": "paragraph",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": data.strip()
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        })
 
-
-
-
-    # ✅ Log everything
+    # ✅ Log everything after loop
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
