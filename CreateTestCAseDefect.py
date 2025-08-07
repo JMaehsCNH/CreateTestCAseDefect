@@ -194,7 +194,7 @@ def add_gherkin_script(test_case_key, steps):
     print(f"📄 Gherkin script:\n{gherkin_script}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")  # Debug output
 
-    response = requests.post(url, headers=headers, json=payload)
+    response = requests.put(url, headers=headers, json=payload)
 
     print(f"📥 Response Status: {response.status_code}")
     print(f"📥 Response Text: {response.text}")
