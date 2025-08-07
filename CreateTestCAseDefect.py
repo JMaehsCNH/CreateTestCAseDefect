@@ -150,13 +150,14 @@ def add_test_steps(test_case_key, steps):
         "items": [
             {
                 "inline": {
-                    "step": step.get("action", f"Step {idx}").strip(),
-                    "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-                    "testData": step.get("testData", "").strip()
+                    "step": str(step.get("action", f"Step {idx}")).strip() or "Step not defined",
+                    "expectedResult": str(step.get("expectedResult", "No Expected Result")).strip(),
+                    "testData": str(step.get("testData", "")).strip()
                 }
             } for idx, step in enumerate(steps, 1)
         ]
     }
+
 
     # ✅ Log everything
     print(f"📤 URL: {url}")
