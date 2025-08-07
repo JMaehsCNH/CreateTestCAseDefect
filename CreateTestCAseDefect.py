@@ -139,7 +139,7 @@ def create_test_case(project_key, name):
     return response.json()
     
 def add_test_steps(test_case_key, steps):
-    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps/update"
+    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
         "Authorization": f"Bearer {ZEPHYR_TOKEN}",
         "Content-Type": "application/json"
