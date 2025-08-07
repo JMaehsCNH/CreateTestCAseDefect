@@ -139,36 +139,29 @@ def create_test_case(project_key, name):
     return response.json()
     
 def add_test_steps(test_case_key, steps):
-    url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
         "Authorization": f"Bearer {ZEPHYR_TOKEN}",
         "Content-Type": "application/json"
     }
 
-    items = []
     for idx, step in enumerate(steps, 1):
-        items.append({
+        url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
+        payload = {
             "step": step.get("action", f"Step {idx}").strip(),
             "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
             "testData": step.get("testData", "").strip(),
-            "type": "INLINE"
-        })
+            "type": "INLINE"  # Required field
+        }
 
-    payload = {
-        "mode": "APPEND",  # Required for adding steps
-        "items": items
-    }
+        print(f"➕ Adding step {idx} to {test_case_key}...")
+        print(json.dumps(payload, indent=2))
 
-    print(f"📤 Sending {len(items)} steps to {test_case_key}...")
-    print(json.dumps(payload, indent=2))
-
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code != 201:
-        print(f"❌ Failed to add steps: {response.status_code}")
-        print(response.text)
-    else:
-        print("✅ Steps added successfully.")
-
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code != 201:
+            print(f"❌ Failed to add step {idx}: {response.status_code}")
+            print(response.text)
+        else:
+            print(f"✅ Step {idx} added.")
 
 
 
