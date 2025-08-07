@@ -271,7 +271,9 @@ else:
             else:
                 test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
                 print(f"✅ Created Zephyr Test Case: {test_case['key']}")
-                add_gherkin_script(test_case['key'], steps)
+                add_test_steps(test_case['key'], steps)
+                fetch_test_steps(test_case['key'])  # ✅ Verify the result in Zephyr
+
 
 
         else:
