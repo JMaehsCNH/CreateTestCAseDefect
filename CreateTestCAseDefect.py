@@ -150,7 +150,7 @@ def add_test_steps(test_case_key, steps):
             "step": step.get("action", f"Step {idx}").strip(),
             "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
             "testData": step.get("testData", "").strip(),
-            "mode": "STEP_BY_STEP"  # 🛠️ Required field
+            "mode": "APPEND"
         }
 
         print(f"➕ Adding step {idx} to {test_case_key}...")
