@@ -176,23 +176,24 @@ def add_gherkin_script(test_case_key, steps):
         "Content-Type": "application/json"
     }
 
-    # Convert steps to Gherkin format (assumes each step is a line)
+    # Convert steps to Gherkin format
     gherkin_script = "Feature: Auto-generated from Jira Bug\n  Scenario: Auto test\n"
     for step in steps:
         line = step.get("action", "").strip()
-        if line.lower().startswith("given") or line.lower().startswith("when") or line.lower().startswith("then") or line.lower().startswith("and"):
+        if line.lower().startswith(("given", "when", "then", "and", "but")):
             gherkin_script += f"    {line}\n"
         else:
             gherkin_script += f"    And {line}\n"
 
     payload = {
-        "type": "GHERKIN",
+        "type": "GHERKIN",  # ✅ REQUIRED: Tells Zephyr what format you're uploading
         "text": gherkin_script
     }
 
-
     print(f"📤 Adding Gherkin script to {test_case_key}...")
     print(f"📄 Gherkin script:\n{gherkin_script}")
+    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")  # Debug output
+
     response = requests.post(url, headers=headers, json=payload)
 
     print(f"📥 Response Status: {response.status_code}")
