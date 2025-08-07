@@ -152,6 +152,22 @@ def rich_text_paragraph(text):
             }
         ]
     }
+def to_adf(text):
+    return {
+        "type": "doc",
+        "version": 1,
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text
+                    }
+                ]
+            }
+        ]
+    }
 
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
@@ -175,14 +191,13 @@ def add_test_steps(test_case_key, steps):
         print(f"    expectedResult = '{expected}'")
         print(f"    testData = '{data}'")
 
-        payload["items"].append({
+       payload["items"].append({
             "inline": {
-                "step": step_text,
-                "expectedResult": expected,
-                "testData": data
+                "step": to_adf(step_text),
+                "expectedResult": to_adf(expected),
+                "testData": to_adf(data)
             }
         })
-
 
 
     print(f"📤 URL: {url}")
