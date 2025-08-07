@@ -147,27 +147,16 @@ def add_test_steps(test_case_key, steps):
 
     payload = {
         "mode": "APPEND",
-        "items": []
+        "items": [
+            {
+                "inline": {
+                    "Step": step.get("action", f"Step {idx}").strip(),
+                    "ExpectedResult": step.get("expectedResult", "No Expected Result").strip(),
+                    "TestData": step.get("testData", "").strip()
+                }
+            } for idx, step in enumerate(steps, 1)
+        ]
     }
-    
-    for idx, step in enumerate(steps, 1):
-        step_text = step.get("action", f"Step {idx}")
-        expected = step.get("expectedResult", "No Expected Result")
-        data = step.get("testData", "")
-    
-        print(f"🧪 Step {idx}:")
-        print(f"    step = '{step_text}'")
-        print(f"    expectedResult = '{expected}'")
-        print(f"    testData = '{data}'")
-    
-        payload["items"].append({
-            "inline": {
-                "step": step_text.strip(),
-                "expectedResult": expected.strip(),
-                "testData": data.strip()
-            }
-        })
-
 
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
