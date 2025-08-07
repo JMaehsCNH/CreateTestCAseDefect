@@ -126,7 +126,7 @@ def create_test_case(project_key, name):
     payload = {
         "projectKey": project_key,
         "name": name,
-        "scriptType": "Plain_Text",
+        "scriptType": "STEP_BY_STEP",
         "automated": False
     }
 
