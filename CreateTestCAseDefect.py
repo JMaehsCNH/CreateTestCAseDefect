@@ -1,6 +1,7 @@
 import requests
 import re
 import os
+import json
 
 # Configuration
 JIRA_BASE_URL = "https://cnhpd.atlassian.net"
