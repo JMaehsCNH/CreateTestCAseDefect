@@ -73,7 +73,7 @@ def search_issues_jql(jql, max_results=25):
         print(f"URL: {url}")
         print(f"JQL: {jql}")
         print(f"Response: {response.text}")
-        
+
     response.raise_for_status()
     return response.json().get("issues", [])
 
@@ -126,7 +126,7 @@ def create_test_case(project_key, name):
     payload = {
         "projectKey": project_key,
         "name": name,
-        "scriptType": "PLAIN_TEXT",
+        "scriptType": "Plain_Text",
         "automated": False
     }
 
@@ -137,7 +137,7 @@ def create_test_case(project_key, name):
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
-    
+
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
@@ -147,28 +147,21 @@ def add_test_steps(test_case_key, steps):
 
     payload = {
         "mode": "APPEND",
-        "items": []
+        "items": [
+            {
+                "step": str(step.get("action", f"Step {idx}")).strip() or "Step not defined",
+                "expectedResult": str(step.get("expectedResult", "No Expected Result")).strip(),
+                "testData": str(step.get("testData", "")).strip()
+
+
+            } for idx, step in enumerate(steps, 1)
+        ]
     }
-    
-    for idx, step in enumerate(steps, 1):
-        step_text = step.get("action", f"Step {idx}")
-        expected = step.get("expectedResult", "No Expected Result")
-        data = step.get("testData", "")
-    
-        print(f"🧪 Step {idx}:")
-        print(f"    step = '{step_text}'")
-        print(f"    expectedResult = '{expected}'")
-        print(f"    testData = '{data}'")
-    
-        payload["items"].append({
-            "inline": {
-                "Step": step_text.strip(),
-                "ExpectedResult": expected.strip(),
-                "TestData": data.strip()
-            }
-        })
 
 
+
+
+    # ✅ Log everything
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
@@ -186,6 +179,7 @@ def add_test_steps(test_case_key, steps):
             print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
+
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
