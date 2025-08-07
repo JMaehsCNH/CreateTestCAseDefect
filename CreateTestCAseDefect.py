@@ -132,15 +132,19 @@ def create_test_case(project_key, name, steps):
             "testData": step.get("testData", "").strip() or ""
         })
 
-        payload = {
+    # ✅ Define payload *after* collecting all steps
+    payload = {
         "projectKey": project_key,
         "name": name,
-        "scriptType": "MANUAL",  # ✅ This tells Zephyr to use manual steps
+        "scriptType": "MANUAL",  # Must be set explicitly
         "testScript": {
-            "type": "STEP_BY_STEP",  # ✅ This ensures it uses the step-by-step editor
+            "type": "STEP_BY_STEP",
             "steps": normalized_steps
         }
     }
+
+    print("📤 Final Zephyr Payload:")
+    print(json.dumps(payload, indent=2))  # 👈 For debug purposes
 
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
