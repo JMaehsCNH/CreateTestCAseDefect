@@ -333,19 +333,29 @@ else:
             steps = extract_repro_steps(description)
             print(f"📄 Extracted Steps: {json.dumps(steps, indent=2)}")
 
-            if not steps:
-                print("⚠️ No steps extracted! Repro format may be unsupported.")
-            else:
+            if checkbox and description:
+                print("🔍 Extracting steps...")
+                steps = extract_repro_steps(description)
+                print(f"📄 Extracted Steps: {json.dumps(steps, indent=2)}")
+            
+                if not steps:
+                    print("⚠️ No steps extracted! Repro format may be unsupported.")
+                    continue
+            
+                # ✅ Skip if test case already linked
+                if zephyr_key_already_commented(key, "PREC-T"):
+                    print(f"ℹ️ Zephyr test case already linked in {key}. Skipping...")
+                    continue
+            
+                # ✅ Now safe to create a new Zephyr test case
                 test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
-                print(f"✅ Created Zephyr Test Case: {test_case['key']}")
                 zephyr_key = test_case['key']
-            if zephyr_key_already_commented(key, zephyr_key):
-                print(f"ℹ️ Zephyr key {zephyr_key} already commented in {key}. Skipping comment.")
-            else:
+                print(f"✅ Created Zephyr Test Case: {zephyr_key}")
+            
                 post_zephyr_comment(key, zephyr_key)
-
                 add_test_steps(zephyr_key, steps)
                 fetch_test_steps(zephyr_key)
+
 
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
