@@ -168,7 +168,6 @@ def to_adf(text):
             }
         ]
     }
-
 def add_gherkin_script(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/testscript"
     headers = {
@@ -176,7 +175,6 @@ def add_gherkin_script(test_case_key, steps):
         "Content-Type": "application/json"
     }
 
-    # Convert to Gherkin
     gherkin_script = "Feature: Auto-generated from Jira Bug\n  Scenario: Auto test\n"
     for step in steps:
         line = step.get("action", "").strip()
@@ -186,9 +184,7 @@ def add_gherkin_script(test_case_key, steps):
             gherkin_script += f"    And {line}\n"
 
     payload = {
-        "type": {
-            "name": "GHERKIN"
-        },
+        "type": "GHERKIN_TEST_SCRIPT",
         "text": gherkin_script
     }
 
