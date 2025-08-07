@@ -186,7 +186,7 @@ def add_gherkin_script(test_case_key, steps):
             gherkin_script += f"    And {line}\n"
 
     payload = {
-        "type": "GHERKIN_TEST_SCRIPT",  # ✅ REQUIRED: Tells Zephyr what format you're uploading
+        "type": "GHERKIN",  # ✅ REQUIRED: Tells Zephyr what format you're uploading
         "text": gherkin_script
     }
 
