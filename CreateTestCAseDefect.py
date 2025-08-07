@@ -149,9 +149,11 @@ def add_test_steps(test_case_key, steps):
         "mode": "APPEND",
         "items": [
             {
-                "step": step.get("action", f"Step {idx}").strip(),
-                "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-                "testData": step.get("testData", "").strip()
+                "inline": {
+                    "step": step.get("action", f"Step {idx}").strip(),
+                    "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
+                    "testData": step.get("testData", "").strip()
+                }
             } for idx, step in enumerate(steps, 1)
         ]
     }
