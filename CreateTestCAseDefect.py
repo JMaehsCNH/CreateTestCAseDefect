@@ -191,13 +191,14 @@ def add_test_steps(test_case_key, steps):
         print(f"    expectedResult = '{expected}'")
         print(f"    testData = '{data}'")
 
-       payload["items"].append({
+        payload["items"].append({
             "inline": {
                 "step": to_adf(step_text),
                 "expectedResult": to_adf(expected),
                 "testData": to_adf(data)
             }
         })
+
 
 
     print(f"📤 URL: {url}")
