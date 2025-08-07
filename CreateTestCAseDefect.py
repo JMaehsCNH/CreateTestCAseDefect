@@ -150,7 +150,7 @@ def add_test_steps(test_case_key, steps):
         "items": [
             {
                 "inline": {
-                    "step": step.get('action', f'Step {idx}').strip(),
+                    "step": step.get("action", f"Step {idx}").strip(),
                     "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
                     "testData": step.get("testData", "").strip()
                 }
@@ -158,15 +158,25 @@ def add_test_steps(test_case_key, steps):
         ]
     }
 
-    print(f"📤 Sending {len(steps)} steps to {test_case_key}...")
-    print(json.dumps(payload, indent=2))
+    # ✅ Log everything
+    print(f"📤 URL: {url}")
+    print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
+    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
 
     response = requests.post(url, headers=headers, json=payload)
+
+    print(f"📥 Raw Response Status: {response.status_code}")
+    print(f"📥 Raw Response Text:\n{response.text}")
+
     if response.status_code != 201:
-        print(f"❌ Failed to add steps: {response.status_code}")
-        print(response.text)
+        try:
+            print("❌ Zephyr API Error:")
+            print(json.dumps(response.json(), indent=2))
+        except:
+            print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
+
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
