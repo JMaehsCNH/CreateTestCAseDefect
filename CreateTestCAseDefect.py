@@ -158,10 +158,22 @@ else:
         checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
         description = issue["fields"].get(REPRO_STEPS_FIELD, "")
 
+        print(f"\n🐞 Issue Key: {key}")
+        print(f"📝 Summary: {summary}")
+        print(f"☑️ Checkbox Set: {checkbox}")
+        print(f"📋 Repro Steps Field Type: {type(description)}")
+        print(f"📋 Repro Steps Raw Value:\n{description}")
+
         if checkbox and description:
-            print(f"🔄 Processing issue: {key} - {summary}")
+            print("🔍 Extracting steps...")
             steps = extract_repro_steps(description)
-            test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary, steps)
-            print(f"✅ Created Zephyr Test Case: {test_case['key']}")
+            print(f"📄 Extracted Steps: {json.dumps(steps, indent=2)}")
+
+            if not steps:
+                print("⚠️ No steps extracted! Repro format may be unsupported.")
+            else:
+                test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary, steps)
+                print(f"✅ Created Zephyr Test Case: {test_case['key']}")
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
+
