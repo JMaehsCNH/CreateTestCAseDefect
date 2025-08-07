@@ -181,9 +181,15 @@ def add_test_steps(test_case_key, steps):
     }
 
     for idx, step in enumerate(steps, 1):
-        step_text = step.get("action", f"Step {idx}").strip()
-        expected = step.get("expectedResult", "No Expected Result").strip()
-        data = step.get("testData", "").strip()
+        step_text = (step.get("action") or "").strip()
+        expected = (step.get("expectedResult") or "No Expected Result").strip()
+        data = (step.get("testData") or "").strip()
+        
+        # 🛑 Skip if step text is empty
+        if not step_text:
+            print(f"⚠️ Skipping Step {idx} – empty step text")
+            continue
+
 
         print(f"🧪 Step {idx}:")
         print(f"    step = '{step_text}'")
@@ -192,11 +198,12 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "description": step_text,  # ✅ FIXED: was "step"
+                "description": step_text,
                 "expectedResult": expected,
                 "testData": data
             }
         })
+
 
 
 
