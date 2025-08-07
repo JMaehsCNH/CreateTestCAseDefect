@@ -149,7 +149,8 @@ def add_test_steps(test_case_key, steps):
         payload = {
             "step": step.get("action", f"Step {idx}").strip(),
             "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-            "testData": step.get("testData", "").strip()
+            "testData": step.get("testData", "").strip(),
+            "mode": "STEP_BY_STEP"  # 🛠️ Required field
         }
 
         print(f"➕ Adding step {idx} to {test_case_key}...")
@@ -161,6 +162,7 @@ def add_test_steps(test_case_key, steps):
             print(response.text)
         else:
             print(f"✅ Step {idx} added.")
+
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
