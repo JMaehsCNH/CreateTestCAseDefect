@@ -204,7 +204,7 @@ def add_test_steps(test_case_key, steps):
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
 
-    response = requests.put(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload)
 
     print(f"📥 Raw Response Status: {response.status_code}")
     print(f"📥 Raw Response Text:\n{response.text}")
