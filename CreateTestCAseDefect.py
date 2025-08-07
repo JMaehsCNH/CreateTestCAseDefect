@@ -192,11 +192,12 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "step": step_text,
+                "description": step_text,  # ✅ FIXED: was "step"
                 "expectedResult": expected,
                 "testData": data
             }
         })
+
 
 
 
