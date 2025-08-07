@@ -77,7 +77,7 @@ def search_issues_jql(jql, max_results=25):
     response.raise_for_status()
     return response.json().get("issues", [])
 
-def zephyr_key_already_commented(issue_key, zephyr_key):
+def zephyr_key_already_commented(issue_key, keyword="PREC-T"):
     url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
     headers = {
         "Authorization": f"Basic {token}",
@@ -90,9 +90,16 @@ def zephyr_key_already_commented(issue_key, zephyr_key):
 
     comments = response.json().get("comments", [])
     for comment in comments:
-        if zephyr_key in comment.get("body", ""):
-            return True
+        body = comment.get("body")
+        if isinstance(body, dict):  # ADF format
+            body_text = json.dumps(body)
+            if keyword in body_text:
+                return True
+        elif isinstance(body, str):  # plain string fallback
+            if keyword in body:
+                return True
     return False
+
 
 
 def extract_repro_steps(adf):
