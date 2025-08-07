@@ -176,7 +176,7 @@ def add_test_steps(test_case_key, steps):
     }
 
     payload = {
-        "mode": "APPEND",
+        "mode": "OVERWRITE",
         "items": []
     }
 
