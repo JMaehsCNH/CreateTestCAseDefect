@@ -132,11 +132,12 @@ def create_test_case(project_key, name, steps):
             "testData": step.get("testData", "").strip() or ""
         })
 
-    payload = {
+        payload = {
         "projectKey": project_key,
         "name": name,
+        "scriptType": "MANUAL",  # ✅ This tells Zephyr to use manual steps
         "testScript": {
-            "type": "STEP_BY_STEP",
+            "type": "STEP_BY_STEP",  # ✅ This ensures it uses the step-by-step editor
             "steps": normalized_steps
         }
     }
