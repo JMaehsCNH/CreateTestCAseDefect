@@ -112,6 +112,9 @@ def extract_repro_steps(adf):
         print(f"⚠️ Error parsing ADF: {e}")
     return steps
 
+print("📦 Payload being sent to Zephyr:")
+print(json.dumps(payload, indent=2))
+
 def create_test_case(project_key, name, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases"
     headers = {
@@ -119,26 +122,27 @@ def create_test_case(project_key, name, steps):
         "Content-Type": "application/json"
     }
 
+    # Ensure each step has required fields
+    normalized_steps = []
+    for step in steps:
+        normalized_steps.append({
+            "action": step.get("action", "").strip() or "No Action Provided",
+            "expectedResult": step.get("expectedResult", "").strip() or "No Expected Result",
+            "testData": step.get("testData", "").strip() or ""
+        })
+
     payload = {
         "projectKey": project_key,
         "name": name,
         "testScript": {
-            "type": "STEP_BY_STEP",  # <-- Must be this to populate the manual step editor
-            "steps": [
-                {
-                    "action": step["action"],
-                    "expectedResult": step.get("expectedResult", ""),
-                    "testData": step.get("testData", "")
-                }
-                for step in steps
-            ]
+            "type": "STEP_BY_STEP",
+            "steps": normalized_steps
         }
     }
 
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
-
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
