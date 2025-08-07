@@ -154,7 +154,8 @@ def add_test_steps(test_case_key, steps):
         payload["items"].append({
             "step": step.get("action", f"Step {idx}").strip(),
             "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
-            "testData": step.get("testData", "").strip()
+            "testData": step.get("testData", "").strip(),
+            "type": "INLINE"  # ✅ Required field
         })
 
     print(f"📤 Sending {len(payload['items'])} steps to {test_case_key}...")
@@ -166,8 +167,6 @@ def add_test_steps(test_case_key, steps):
         print(response.text)
     else:
         print("✅ Steps added successfully.")
-
-
 
 # Main logic
 jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
