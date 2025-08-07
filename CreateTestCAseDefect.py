@@ -150,7 +150,7 @@ def add_test_steps(test_case_key, steps):
         "items": [
             {
                 "inline": {
-                    "step": step.get("action", f"Step {idx}").strip(),
+                    "step": f"<p>{step.get('action', f'Step {idx}').strip()}</p>",
                     "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
                     "testData": step.get("testData", "").strip()
                 }
