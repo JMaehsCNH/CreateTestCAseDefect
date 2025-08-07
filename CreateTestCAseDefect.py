@@ -176,7 +176,7 @@ def add_gherkin_script(test_case_key, steps):
         "Content-Type": "application/json"
     }
 
-    # Convert steps to Gherkin format
+    # Convert to Gherkin
     gherkin_script = "Feature: Auto-generated from Jira Bug\n  Scenario: Auto test\n"
     for step in steps:
         line = step.get("action", "").strip()
@@ -186,15 +186,17 @@ def add_gherkin_script(test_case_key, steps):
             gherkin_script += f"    And {line}\n"
 
     payload = {
-        "type": "GHERKIN",  # ✅ REQUIRED: Tells Zephyr what format you're uploading
+        "type": {
+            "name": "GHERKIN"
+        },
         "text": gherkin_script
     }
 
     print(f"📤 Adding Gherkin script to {test_case_key}...")
     print(f"📄 Gherkin script:\n{gherkin_script}")
-    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")  # Debug output
+    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
 
-    response = requests.put(url, headers=headers, json=payload)
+    response = requests.post(url, headers=headers, json=payload)
 
     print(f"📥 Response Status: {response.status_code}")
     print(f"📥 Response Text: {response.text}")
@@ -203,6 +205,7 @@ def add_gherkin_script(test_case_key, steps):
         print("❌ Failed to add Gherkin script.")
     else:
         print("✅ Gherkin script added successfully.")
+
 
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
