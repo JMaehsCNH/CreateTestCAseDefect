@@ -150,51 +150,14 @@ def add_test_steps(test_case_key, steps):
         "items": [
             {
                 "inline": {
-                    "step": {
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": step.get("action", f"Step {idx}").strip()
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    "expectedResult": {
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": step.get("expectedResult", "No Expected Result").strip()
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    "testData": {
-                        "content": [
-                            {
-                                "type": "paragraph",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "text": step.get("testData", "").strip()
-                                    }
-                                ]
-                            }
-                        ]
-                    }
+                    "step": step.get("action", f"Step {idx}").strip(),
+                    "expectedResult": step.get("expectedResult", "No Expected Result").strip(),
+                    "testData": step.get("testData", "").strip()
                 }
             } for idx, step in enumerate(steps, 1)
         ]
     }
 
-    # ✅ Log everything
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
@@ -213,7 +176,6 @@ def add_test_steps(test_case_key, steps):
     else:
         print("✅ Steps added successfully.")
 
-        
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
