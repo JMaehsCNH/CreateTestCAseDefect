@@ -234,10 +234,12 @@ def fetch_test_steps(test_case_key):
         steps = response.json().get("values", [])
         print("📋 Stored Steps in Zephyr:")
         for i, step in enumerate(steps, 1):
+            inline = step.get("inline", {})
             print(f"  Step {i}:")
-            print(f"    Step: {step.get('step')}")
-            print(f"    Test Data: {step.get('testData')}")
-            print(f"    Expected Result: {step.get('expectedResult')}")
+            print(f"    Description: {inline.get('description')}")
+            print(f"    Test Data: {inline.get('testData')}")
+            print(f"    Expected Result: {inline.get('expectedResult')}")
+
     except Exception as e:
         print("❌ Failed to fetch stored steps.")
         print(response.text)
