@@ -177,11 +177,12 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "step": step_text,
-                "expectedResult": expected,
-                "testData": data
+                "step": rich_text_paragraph(step_text),
+                "expectedResult": rich_text_paragraph(expected),
+                "testData": rich_text_paragraph(data)
             }
         })
+
 
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
