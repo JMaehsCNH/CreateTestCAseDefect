@@ -137,6 +137,21 @@ def create_test_case(project_key, name):
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
     return response.json()
+    
+def rich_text_paragraph(text):
+    return {
+        "content": [
+            {
+                "type": "paragraph",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text
+                    }
+                ]
+            }
+        ]
+    }
 
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
@@ -151,9 +166,9 @@ def add_test_steps(test_case_key, steps):
     }
 
     for idx, step in enumerate(steps, 1):
-        step_text = step.get("action", f"Step {idx}")
-        expected = step.get("expectedResult", "No Expected Result")
-        data = step.get("testData", "")
+        step_text = step.get("action", f"Step {idx}").strip()
+        expected = step.get("expectedResult", "No Expected Result").strip()
+        data = step.get("testData", "").strip()
 
         print(f"🧪 Step {idx}:")
         print(f"    step = '{step_text}'")
@@ -162,13 +177,12 @@ def add_test_steps(test_case_key, steps):
 
         payload["items"].append({
             "inline": {
-                "step": step_text.strip(),
-                "expectedResult": expected.strip(),
-                "testData": data.strip()
+                "step": rich_text_paragraph(step_text),
+                "expectedResult": rich_text_paragraph(expected),
+                "testData": rich_text_paragraph(data)
             }
         })
 
-    # ✅ Log everything after loop
     print(f"📤 URL: {url}")
     print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
     print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
@@ -186,6 +200,7 @@ def add_test_steps(test_case_key, steps):
             print("❌ Non-JSON error response.")
     else:
         print("✅ Steps added successfully.")
+
 
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
