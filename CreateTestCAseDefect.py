@@ -77,6 +77,23 @@ def search_issues_jql(jql, max_results=25):
     response.raise_for_status()
     return response.json().get("issues", [])
 
+def zephyr_key_already_commented(issue_key, zephyr_key):
+    url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
+    headers = {
+        "Authorization": f"Basic {token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"⚠️ Could not fetch comments for {issue_key}")
+        return False
+
+    comments = response.json().get("comments", [])
+    for comment in comments:
+        if zephyr_key in comment.get("body", ""):
+            return True
+    return False
+
 
 def extract_repro_steps(adf):
     # Handle plain string (fallback)
@@ -168,6 +185,22 @@ def to_adf(text):
             }
         ]
     }
+    def post_zephyr_comment(issue_key, zephyr_key):
+    url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
+    headers = {
+        "Authorization": f"Basic {token}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "body": f"🧪 Linked Zephyr Test Case: **{zephyr_key}**"
+    }
+    response = requests.post(url, headers=headers, json=body)
+    if response.status_code == 201:
+        print(f"✅ Comment added to {issue_key}")
+    else:
+        print(f"❌ Failed to comment on {issue_key}")
+        print(response.text)
+
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
     headers = {
@@ -281,10 +314,14 @@ else:
             else:
                 test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
                 print(f"✅ Created Zephyr Test Case: {test_case['key']}")
-                add_test_steps(test_case['key'], steps)
-                fetch_test_steps(test_case['key'])  # ✅ Verify the result in Zephyr
+                zephyr_key = test_case['key']
+            if zephyr_key_already_commented(key, zephyr_key):
+                print(f"ℹ️ Zephyr key {zephyr_key} already commented in {key}. Skipping comment.")
+            else:
+                post_zephyr_comment(key, zephyr_key)
 
-
+                add_test_steps(zephyr_key, steps)
+                fetch_test_steps(zephyr_key)
 
         else:
             print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
