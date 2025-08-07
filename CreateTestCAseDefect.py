@@ -186,8 +186,10 @@ def add_gherkin_script(test_case_key, steps):
             gherkin_script += f"    And {line}\n"
 
     payload = {
+        "type": "GHERKIN",
         "text": gherkin_script
     }
+
 
     print(f"📤 Adding Gherkin script to {test_case_key}...")
     print(f"📄 Gherkin script:\n{gherkin_script}")
