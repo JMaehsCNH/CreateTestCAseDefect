@@ -149,14 +149,13 @@ def add_test_steps(test_case_key, steps):
         "mode": "APPEND",
         "items": [
             {
-                "inline": {
-                    "step": str(step.get("action", f"Step {idx}")).strip() or "Step not defined",
-                    "expectedResult": str(step.get("expectedResult", "No Expected Result")).strip(),
-                    "testData": str(step.get("testData", "")).strip()
-                }
+                "step": str(step.get("action", f"Step {idx}")).strip() or "Step not defined",
+                "expectedResult": str(step.get("expectedResult", "No Expected Result")).strip(),
+                "testData": str(step.get("testData", "")).strip()
             } for idx, step in enumerate(steps, 1)
         ]
     }
+
 
 
     # ✅ Log everything
