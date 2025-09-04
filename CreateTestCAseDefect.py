@@ -1,135 +1,136 @@
-import requests
-import re
-import os
-import json
+import os, re, json, base64, requests
 
-# Configuration
-JIRA_BASE_URL = "https://cnhpd.atlassian.net"
+# ======== CONFIG ========
+JIRA_BASE_URL   = "https://cnhpd.atlassian.net"
 ZEPHYR_BASE_URL = "https://api.zephyrscale.smartbear.com/v2"
-JIRA_EMAIL = "john.maehs@cnh.com"
-JIRA_API_TOKEN = os.getenv("JIRA_API_TOKEN")  # Set in your environment
-ZEPHYR_TOKEN = os.getenv("ZEPHYR_TOKEN")  # Set in your environment
+
+JIRA_EMAIL      = "john.maehs@cnh.com"
+JIRA_API_TOKEN  = os.getenv("JIRA_API_TOKEN")           # required
+ZEPHYR_TOKEN    = os.getenv("ZEPHYR_TOKEN")             # required
 ZEPHYR_PROJECT_KEY = "PREC"
 
+# Jira custom field IDs (adjust to your site)
+REPRO_STEPS_FIELD = "customfield_13101"     # repro steps (ADF or text)
+CHECKBOX_FIELD    = "customfield_14242"     # "Create Test Case" checkbox
+CHECKBOX_FIELD_NAME = "Create Test Case"    # label in the UI (for JQL)
 
-# Authentication
-JIRA_AUTH = (JIRA_EMAIL, JIRA_API_TOKEN)
+# ======== AUTH HEADERS ========
+if not (JIRA_EMAIL and JIRA_API_TOKEN):
+    raise SystemExit("❌ Missing JIRA_EMAIL or JIRA_API_TOKEN.")
+
+jira_b64 = base64.b64encode(f"{JIRA_EMAIL}:{JIRA_API_TOKEN}".encode()).decode()
+JIRA_HEADERS_JSON = {
+    "Authorization": f"Basic {jira_b64}",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
+
+ZEPHYR_HEADERS_JSON = {
+    "Authorization": f"Bearer {ZEPHYR_TOKEN}",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
+}
 
 print("🔐 Testing Jira authentication...")
-print(f"📥 Env var JIRA_EMAIL: {JIRA_EMAIL}")
-print(f"📥 Env var JIRA_API_TOKEN set: {'Yes' if JIRA_API_TOKEN else 'No'}")
-print(f"🌐 Jira URL: {JIRA_BASE_URL}/rest/api/3/myself")
-
-# Optionally show Authorization header for debugging
-import base64
-if JIRA_EMAIL and JIRA_API_TOKEN:
-    token = base64.b64encode(f"{JIRA_EMAIL}:{JIRA_API_TOKEN}".encode()).decode()
-    print(f"🧪 Base64 Authorization header (debug): Basic {token[:6]}...")
-
-# Use basic auth in headers to match Jira expectations
-headers = {
-    "Authorization": f"Basic {token}",
-    "Content-Type": "application/json"
-}
-auth_check = requests.get(f"{JIRA_BASE_URL}/rest/api/3/myself", headers=headers)
-
-print(f"Auth status: {auth_check.status_code}")
-if auth_check.status_code != 200:
+me = requests.get(f"{JIRA_BASE_URL}/rest/api/3/myself", headers=JIRA_HEADERS_JSON)
+print(f"Auth status: {me.status_code}")
+if me.status_code != 200:
     print("❌ Jira authentication failed.")
-    print("Response body:")
-    print(auth_check.text)
-    exit(1)
-else:
-    print("✅ Jira authentication successful.")
+    print(me.text)
+    raise SystemExit(1)
+print("✅ Jira authentication successful.")
 
-url = f"{JIRA_BASE_URL}/rest/api/3/search"
-payload = {
-    "jql": "project = PREC AND issuetype = Bug",
-    "maxResults": 1
-}
-response = requests.post(url, auth=JIRA_AUTH, json=payload, headers={"Content-Type": "application/json"})
-
-print(response.status_code)
-print(response.json())
-
-# Update with your actual Jira custom field IDs
-REPRO_STEPS_FIELD = "customfield_13101"      # <-- Replace with actual field ID
-CHECKBOX_FIELD = "customfield_14242"         # <-- Replace with actual checkbox field ID
-CHECKBOX_FIELD_NAME = "Create Test Case"  # ✅ Use the visible field label from Jira UI
-
-def search_issues_jql(jql, max_results=25):
-    url = f"{JIRA_BASE_URL}/rest/api/3/search"
-    headers = {"Content-Type": "application/json"}
-    payload = {
+# ======== HELPERS ========
+def jira_search_jql(jql: str, fields=None, max_results=50):
+    """
+    Use the new POST /rest/api/3/search/jql with nextPageToken pagination.
+    """
+    url = f"{JIRA_BASE_URL}/rest/api/3/search/jql"
+    body = {
         "jql": jql,
         "maxResults": max_results,
-        "fields": [REPRO_STEPS_FIELD, CHECKBOX_FIELD, "summary", "project", "issuetype"]
+        "fields": fields or []
     }
-    response = requests.post(url, auth=JIRA_AUTH, json=payload, headers=headers)
 
-    if response.status_code != 200:
-        print("❌ Jira Search Error:")
-        print(f"Status Code: {response.status_code}")
-        print(f"URL: {url}")
-        print(f"JQL: {jql}")
-        print(f"Response: {response.text}")
+    all_issues = []
+    next_page = None
+    page = 0
 
-    response.raise_for_status()
-    return response.json().get("issues", [])
+    while True:
+        page += 1
+        payload = dict(body)
+        if next_page:
+            payload["nextPageToken"] = next_page
+
+        r = requests.post(url, headers=JIRA_HEADERS_JSON, json=payload)
+        if r.status_code != 200:
+            print("❌ Jira Search Error:")
+            print(f"Status Code: {r.status_code}")
+            print(f"URL: {url}")
+            print(f"JQL: {jql}")
+            print(f"Body sent: {json.dumps(payload, indent=2)}")
+            print(f"Response: {r.text}")
+            r.raise_for_status()
+
+        data = r.json()
+        issues = data.get("issues", [])
+        print(f"📄 Search page {page} → {len(issues)} issues")
+        all_issues.extend(issues)
+
+        if data.get("isLast", True):
+            break
+        next_page = data.get("nextPageToken")
+        if not next_page:
+            break
+
+    print(f"📊 Total issues fetched: {len(all_issues)}")
+    return all_issues
 
 def zephyr_key_already_commented(issue_key, keyword="PREC-T"):
     url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
-    headers = {
-        "Authorization": f"Basic {token}",
-        "Content-Type": "application/json"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        print(f"⚠️ Could not fetch comments for {issue_key}")
+    r = requests.get(url, headers=JIRA_HEADERS_JSON)
+    if r.status_code != 200:
+        print(f"⚠️ Could not fetch comments for {issue_key}: {r.status_code}")
         return False
 
-    comments = response.json().get("comments", [])
-    for comment in comments:
-        body = comment.get("body")
-        if isinstance(body, dict):  # ADF format
-            body_text = json.dumps(body)
-            if keyword in body_text:
+    comments = r.json().get("comments", [])
+    for c in comments:
+        body = c.get("body")
+        if isinstance(body, dict):  # ADF
+            if keyword in json.dumps(body):
                 return True
-        elif isinstance(body, str):  # plain string fallback
+        elif isinstance(body, str):
             if keyword in body:
                 return True
     return False
 
-
-
-def extract_repro_steps(adf):
-    # Handle plain string (fallback)
-    if isinstance(adf, str):
-        lines = adf.splitlines()
-        steps = []
-        step = ""
+def extract_repro_steps(adf_or_text):
+    # Fallback: plain text with "1. Step" lines
+    if isinstance(adf_or_text, str):
+        lines = adf_or_text.splitlines()
+        steps, step = [], ""
         for line in lines:
-            match = re.match(r"^\s*\d+\.\s*(.*)", line)
-            if match:
+            m = re.match(r"^\s*\d+\.\s*(.*)", line)
+            if m:
                 if step:
                     steps.append({"action": step.strip()})
-                step = match.group(1)
+                step = m.group(1)
             else:
-                step += "\n" + line
+                step += ("\n" + line)
         if step:
             steps.append({"action": step.strip()})
         return steps
 
-    # Handle ADF format
+    # ADF ordered list → extract text per list item
     steps = []
     try:
-        for block in adf.get("content", []):
-            if block["type"] == "orderedList":
-                for item in block["content"]:
+        for block in adf_or_text.get("content", []):
+            if block.get("type") == "orderedList":
+                for item in block.get("content", []):
                     step_text = ""
                     for paragraph in item.get("content", []):
-                        for part in paragraph.get("content", []):
-                            if part["type"] == "text":
+                        for part in (paragraph.get("content", []) or []):
+                            if part.get("type") == "text":
                                 step_text += part.get("text", "")
                     if step_text.strip():
                         steps.append({"action": step_text.strip()})
@@ -137,122 +138,54 @@ def extract_repro_steps(adf):
         print(f"⚠️ Error parsing ADF: {e}")
     return steps
 
-print("📦 Payload being sent to Zephyr:")
-print(json.dumps(payload, indent=2))
-
 def create_test_case(project_key, name):
     url = f"{ZEPHYR_BASE_URL}/testcases"
-    headers = {
-        "Authorization": f"Bearer {ZEPHYR_TOKEN}",
-        "Content-Type": "application/json"
-    }
-
     payload = {
         "projectKey": project_key,
         "name": name,
         "scriptType": "STEP_BY_STEP",
         "automated": False
     }
-
-    print("📤 Creating test case in Zephyr...")
-    print("📤 Final Zephyr Payload:")
-    print(json.dumps(payload, indent=2))  # 👈 For debug purposes
-
-    response = requests.post(url, headers=headers, json=payload)
-    response.raise_for_status()
-    return response.json()
-    
-def rich_text_paragraph(text):
-    return {
-        "content": [
-            {
-                "type": "paragraph",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": text
-                    }
-                ]
-            }
-        ]
-    }
-def to_adf(text):
-    return {
-        "type": "doc",
-        "version": 1,
-        "content": [
-            {
-                "type": "paragraph",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": text
-                    }
-                ]
-            }
-        ]
-    }
+    print("📤 Creating test case in Zephyr…")
+    print(json.dumps(payload, indent=2))
+    r = requests.post(url, headers=ZEPHYR_HEADERS_JSON, json=payload)
+    if r.status_code not in (200, 201):
+        print("❌ Zephyr create failed:")
+        print(r.text)
+        r.raise_for_status()
+    return r.json()
 
 def post_zephyr_comment(issue_key, zephyr_key):
     url = f"{JIRA_BASE_URL}/rest/api/3/issue/{issue_key}/comment"
-    headers = {
-        "Authorization": f"Basic {token}",
-        "Content-Type": "application/json"
-    }
     body = {
         "body": {
             "type": "doc",
             "version": 1,
-            "content": [
-                {
-                    "type": "paragraph",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"🧪 Linked Zephyr Test Case: {zephyr_key}"
-                        }
-                    ]
-                }
-            ]
+            "content": [{
+                "type": "paragraph",
+                "content": [{"type": "text", "text": f"🧪 Linked Zephyr Test Case: {zephyr_key}"}]
+            }]
         }
     }
-
-    response = requests.post(url, headers=headers, json=body)
-    if response.status_code == 201:
+    r = requests.post(url, headers=JIRA_HEADERS_JSON, json=body)
+    if r.status_code == 201:
         print(f"✅ Comment added to {issue_key}")
     else:
-        print(f"❌ Failed to comment on {issue_key}")
-        print(response.text)
-
+        print(f"❌ Failed to comment on {issue_key}: {r.status_code}")
+        print(r.text)
 
 def add_test_steps(test_case_key, steps):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
-    headers = {
-        "Authorization": f"Bearer {ZEPHYR_TOKEN}",
-        "Content-Type": "application/json"
-    }
-
-    payload = {
-        "mode": "OVERWRITE",
-        "items": []
-    }
+    payload = {"mode": "OVERWRITE", "items": []}
 
     for idx, step in enumerate(steps, 1):
         step_text = (step.get("action") or "").strip()
-        expected = (step.get("expectedResult") or "No Expected Result").strip()
-        data = (step.get("testData") or "").strip()
-        
-        # 🛑 Skip if step text is empty
+        expected   = (step.get("expectedResult") or "No Expected Result").strip()
+        data       = (step.get("testData") or "").strip()
         if not step_text:
             print(f"⚠️ Skipping Step {idx} – empty step text")
             continue
-
-
-        print(f"🧪 Step {idx}:")
-        print(f"    step = '{step_text}'")
-        print(f"    expectedResult = '{expected}'")
-        print(f"    testData = '{data}'")
-
+        print(f"🧪 Step {idx}: step='{step_text}' expected='{expected}' data='{data}'")
         payload["items"].append({
             "inline": {
                 "description": step_text,
@@ -261,101 +194,74 @@ def add_test_steps(test_case_key, steps):
             }
         })
 
-
-
-
-
-    print(f"📤 URL: {url}")
-    print(f"📤 Headers:\n{json.dumps(headers, indent=2)}")
-    print(f"📤 Payload:\n{json.dumps(payload, indent=2)}")
-
-    response = requests.post(url, headers=headers, json=payload)
-
-    print(f"📥 Raw Response Status: {response.status_code}")
-    print(f"📥 Raw Response Text:\n{response.text}")
-
-    if response.status_code != 201:
-        try:
-            print("❌ Zephyr API Error:")
-            print(json.dumps(response.json(), indent=2))
-        except:
-            print("❌ Non-JSON error response.")
+    print("📤 Pushing steps to Zephyr…")
+    print(json.dumps(payload, indent=2))
+    r = requests.post(url, headers=ZEPHYR_HEADERS_JSON, json=payload)
+    print(f"📥 Zephyr response: {r.status_code}")
+    if r.status_code != 201:
+        print(r.text)
+        r.raise_for_status()
     else:
         print("✅ Steps added successfully.")
+
 def fetch_test_steps(test_case_key):
     url = f"{ZEPHYR_BASE_URL}/testcases/{test_case_key}/teststeps"
-    headers = {
-        "Authorization": f"Bearer {ZEPHYR_TOKEN}",
-        "Content-Type": "application/json"
-    }
+    r = requests.get(url, headers=ZEPHYR_HEADERS_JSON)
+    print(f"🔍 Fetch steps: {r.status_code}")
+    if r.status_code == 200:
+        vals = r.json().get("values", [])
+        for i, s in enumerate(vals, 1):
+            inline = s.get("inline", {})
+            print(f"  {i}. {inline.get('description')}  | exp={inline.get('expectedResult')} | data={inline.get('testData')}")
+    else:
+        print(r.text)
 
-    print(f"🔍 Fetching test steps from {url} ...")
-    response = requests.get(url, headers=headers)
+# ======== MAIN ========
+# Only pick Bugs with the checkbox checked
+jql = f'project = {ZEPHYR_PROJECT_KEY} AND issuetype = Bug AND "{CHECKBOX_FIELD_NAME}" = "{CHECKBOX_FIELD_NAME}"'
+print(f"🔎 JQL: {jql}")
 
-    print(f"📥 Fetch Status: {response.status_code}")
-    try:
-        response.raise_for_status()
-        steps = response.json().get("values", [])
-        print("📋 Stored Steps in Zephyr:")
-        for i, step in enumerate(steps, 1):
-            inline = step.get("inline", {})
-            print(f"  Step {i}:")
-            print(f"    Description: {inline.get('description')}")
-            print(f"    Test Data: {inline.get('testData')}")
-            print(f"    Expected Result: {inline.get('expectedResult')}")
-
-    except Exception as e:
-        print("❌ Failed to fetch stored steps.")
-        print(response.text)
-
-
-# Main logic
-jql = 'project = PREC AND issuetype = Bug AND "Create Test Case" = "Create Test Case"'
-issues = search_issues_jql(jql, max_results=50)
+issues = jira_search_jql(
+    jql,
+    fields=[REPRO_STEPS_FIELD, CHECKBOX_FIELD, "summary", "project", "issuetype"],
+    max_results=100
+)
 
 if not issues:
     print("ℹ️ No matching Bugs found with Test Case checkbox checked.")
-else:
-    for issue in issues:
-        key = issue["key"]
-        summary = issue["fields"]["summary"]
-        checkbox = issue["fields"].get(CHECKBOX_FIELD, False)
-        description = issue["fields"].get(REPRO_STEPS_FIELD, "")
+    raise SystemExit(0)
 
-        print(f"\n🐞 Issue Key: {key}")
-        print(f"📝 Summary: {summary}")
-        print(f"☑️ Checkbox Set: {checkbox}")
-        print(f"📋 Repro Steps Field Type: {type(description)}")
-        print(f"📋 Repro Steps Raw Value:\n{description}")
+for issue in issues:
+    key         = issue["key"]
+    fields      = issue.get("fields", {}) or {}
+    summary     = fields.get("summary", "")
+    checkbox    = fields.get(CHECKBOX_FIELD, False)
+    description = fields.get(REPRO_STEPS_FIELD, "")
 
-        if checkbox and description:
-            print("🔍 Extracting steps...")
-            steps = extract_repro_steps(description)
-            print(f"📄 Extracted Steps: {json.dumps(steps, indent=2)}")
+    print(f"\n🐞 {key} — {summary}")
+    print(f"☑️ Checkbox Set: {checkbox}")
+    print(f"📋 Repro Steps Type: {type(description)}")
 
-            if checkbox and description:
-                print("🔍 Extracting steps...")
-                steps = extract_repro_steps(description)
-                print(f"📄 Extracted Steps: {json.dumps(steps, indent=2)}")
-            
-                if not steps:
-                    print("⚠️ No steps extracted! Repro format may be unsupported.")
-                    continue
-            
-                # ✅ Skip if test case already linked
-                if zephyr_key_already_commented(key, "PREC-T"):
-                    print(f"ℹ️ Zephyr test case already linked in {key}. Skipping...")
-                    continue
-            
-                # ✅ Now safe to create a new Zephyr test case
-                test_case = create_test_case(ZEPHYR_PROJECT_KEY, summary)
-                zephyr_key = test_case['key']
-                print(f"✅ Created Zephyr Test Case: {zephyr_key}")
-            
-                post_zephyr_comment(key, zephyr_key)
-                add_test_steps(zephyr_key, steps)
-                fetch_test_steps(zephyr_key)
+    if not (checkbox and description):
+        print(f"⚠️ Skipping {key}: missing checkbox or repro steps.")
+        continue
 
+    # Don’t double-create
+    if zephyr_key_already_commented(key, "PREC-T"):
+        print(f"ℹ️ Zephyr test case already linked in {key}. Skipping…")
+        continue
 
-        else:
-            print(f"⚠️ Skipping {key}: Missing checkbox or repro steps.")
+    steps = extract_repro_steps(description)
+    if not steps:
+        print("⚠️ No steps extracted (unsupported format?).")
+        continue
+
+    # Create Zephyr test case
+    tc = create_test_case(ZEPHYR_PROJECT_KEY, summary)
+    zephyr_key = tc["key"]
+    print(f"✅ Created Zephyr Test Case: {zephyr_key}")
+
+    # Comment back to Jira, then push steps
+    post_zephyr_comment(key, zephyr_key)
+    add_test_steps(zephyr_key, steps)
+    fetch_test_steps(zephyr_key)
